@@ -8,8 +8,11 @@ O grande diferencial da ferramenta é a automação da entrada de dados por meio
 
 ## 🔗 Demonstração Online
 
-A ferramenta está publicada e disponível para uso direto no link abaixo:
-👉 **[https://flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)**
+A ferramenta de demonstração está publicada e disponível para uso interativo em:
+👉 **[https://flaviofariaspe.com.br/calculadora-milhas/](https://flaviofariaspe.com.br/calculadora-milhas/)**
+
+Para ler mais detalhes sobre o desenvolvimento do projeto, acesse a página no meu portfólio:
+*   [flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)
 
 ---
 
@@ -68,7 +71,8 @@ Por ser uma aplicação totalmente *client-side*, não há necessidade de instal
 Por ser uma aplicação totalmente client-side (HTML, CSS e JS estáticos), a implantação é simples e pode ser feita em qualquer provedor de hospedagem de arquivos.
 
 O projeto está publicado na estrutura do portfólio principal:
-*   **[flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)**
+*   **Demonstração (Calculadora):** [flaviofariaspe.com.br/calculadora-milhas/](https://flaviofariaspe.com.br/calculadora-milhas/)
+*   **Página do Portfólio:** [flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)
 
 Caso prefira implantar em plataformas gratuitas como o **GitHub Pages**:
 1. Crie um repositório no GitHub contendo os arquivos `index.html` e `viaje-facil-brasil.png`.
