@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Calculadora de Passagens: Compare N opções de passagens (100% Milhas vs. Múltiplas opções de Pontos + Dinheiro). Cole um print para calcular automaticamente!">
+  <title>Calculadora de Passagens: Milhas vs. Dinheiro (Multi-Opções)</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tesseract.js para processamento local de OCR (Imagens/Prints) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  
+  <style>
+    /* ----------------------------------------------------
+       1. DESIGN SYSTEM & VARIABLES (DARK THEME)
+       ---------------------------------------------------- */
+    :root {
+      --font-family: 'Plus Jakarta Sans', sans-serif;
+      
+      /* Cores Dark Mode Premium */
+      --bg-gradient: radial-gradient(circle at 50% 50%, #0b0f19 0%, #020617 100%);
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      
+      --color-primary: #3b82f6; /* Azul neon tech */
+      --color-primary-hover: #60a5fa;
+      --color-primary-light: rgba(59, 130, 246, 0.15);
+      
+      --color-success: #10b981; /* Verde menta neon */
+      --color-success-dark: #34d399;
+      --color-success-light: rgba(16, 185, 129, 0.15);
+      
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --color-danger-light: rgba(239, 68, 68, 0.15);
+      
+      --text-main: #f8fafc; /* Slate 50 */
+      --text-muted: #94a3b8; /* Slate 400 */
+      --text-light: #64748b; /* Slate 500 */
+      
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-focus: #3b82f6;
+      
+      /* Efeitos e Sombras Dark */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ----------------------------------------------------
+       2. RESET & BASE STYLES
+       ---------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ----------------------------------------------------
+       3. LAYOUT & CARD CONTAINER
+       ---------------------------------------------------- */
+    .container {
+      width: 100%;
+      max-width: 1150px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Cabeçalho */
+    .app-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .logo-container {
+      width: 100%;
+      max-width: 200px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .agency-logo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    }
+
+    .logo-fallback {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #60a5fa;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-fallback svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--color-primary-hover);
+    }
+
+    .logo-fallback span {
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Card Principal */
+    .calculator-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg), var(--shadow-glass);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      min-height: 700px;
+      transition: box-shadow var(--transition-normal);
+    }
+
+    /* Painel de Inputs (Esquerda) */
+    .inputs-panel {
+      padding: 40px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    /* Painel de Resultados (Direita) */
+    .results-panel {
+      padding: 40px;
+      background: rgba(15, 23, 42, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      fill: none;
+    }
+
+    /* ----------------------------------------------------
+       4. DROP ZONE (OCR IMPORT)
+       ---------------------------------------------------- */
+    .drop-zone {
+      background: rgba(59, 130, 246, 0.02);
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drop-zone:hover, .drop-zone--over {
+      border-color: var(--color-primary);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .drop-zone--over {
+      transform: scale(1.01);
+    }
+
+    .drop-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      transition: color var(--transition-fast), transform var(--transition-normal);
+    }
+
+    .drop-zone:hover .drop-icon, .drop-zone--over .drop-icon {
+      color: var(--color-primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .drop-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .drop-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .spinner-ocr {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(59, 130, 246, 0.2);
+      border-top-color: var(--color-primary-hover);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    .ocr-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .ocr-text-status {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    .ocr-progress-bar-bg {
+      width: 100%;
+      max-width: 220px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .ocr-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+      border-radius: 99px;
+      transition: width 0.1s ease;
+    }
+
+    /* ----------------------------------------------------
+       5. DYNAMIC OPTIONS STYLING
+       ---------------------------------------------------- */
+    .options-list-wrapper {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-bottom: 16px;
+    }
+
+    .options-list-wrapper::-webkit-scrollbar {
+      width: 6px;
+    }
+    .options-list-wrapper::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .options-list-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+    }
+
+    .option-row-card {
+      background: rgba(30, 41, 59, 0.4);
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 14px;
+      transition: transform var(--transition-fast), border-color var(--transition-fast);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .option-row-card:focus-within {
+      border-color: var(--color-primary-hover);
+    }
+
+    .option-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .option-card-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-remove-option {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-remove-option:hover {
+      background: var(--color-danger-light);
+      color: var(--color-danger);
+    }
+
+    .btn-remove-option svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .option-inputs-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 8px 10px 8px 32px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background-color: rgba(15, 23, 42, 0.6);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--border-focus);
+      background-color: rgba(15, 23, 42, 0.8);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+
+    .input-wrapper.points-input input {
+      padding-left: 12px;
+      padding-right: 50px;
+    }
+
+    .input-wrapper.points-input .points-tag {
+      position: absolute;
+      right: 12px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px 5px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* Tooltip */
+    .info-tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: help;
+      margin-left: 6px;
+    }
+
+    .info-tooltip svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-light);
+      fill: none !important;
+      transition: stroke var(--transition-fast);
+    }
+
+    .info-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      right: 0;
+      width: 220px;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      font-weight: 400;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity var(--transition-fast), visibility var(--transition-fast);
+      box-shadow: var(--shadow-md);
+      z-index: 10;
+    }
+
+    .info-tooltip:hover::after {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Botão Adicionar Opção */
+    .btn-add-option {
+      width: 100%;
+      background: rgba(30, 41, 59, 0.3);
+      color: var(--color-primary-hover);
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-add-option:hover {
+      border-color: var(--color-primary-hover);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-add-option svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Remover setas de input number */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* ----------------------------------------------------
+       6. BUTTON STYLING
+       ---------------------------------------------------- */
+    .btn-calculate {
+      width: 100%;
+      background: linear-gradient(135deg, var(--color-primary) 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border: none;
+      padding: 14px 24px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+      transition: all var(--transition-fast);
+      margin-top: 12px;
+    }
+
+    .btn-calculate:hover {
+      background: linear-gradient(135deg, var(--color-primary-hover) 0%, #2563eb 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-calculate:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn-calculate svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ----------------------------------------------------
+       7. RESULTS STYLING
+       ---------------------------------------------------- */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .empty-state svg {
+      width: 120px;
+      height: 120px;
+      opacity: 0.8;
+    }
+
+    .empty-state h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 280px;
+      line-height: 1.5;
+    }
+
+    .results-content {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Winner Header Card */
+    .winner-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      border-left: 6px solid var(--color-success);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all var(--transition-normal);
+    }
+
+    .winner-card.base-winner {
+      border-left-color: var(--color-primary-hover);
+    }
+
+    .winner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-success-dark);
+      background: var(--color-success-light);
+      padding: 4px 10px;
+      border-radius: 99px;
+      align-self: flex-start;
+    }
+
+    .winner-card.base-winner .winner-badge {
+      color: var(--color-primary-hover);
+      background: var(--color-primary-light);
+    }
+
+    .winner-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    .winner-savings {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .winner-savings span {
+      color: var(--color-success-dark);
+      font-weight: 700;
+    }
+
+    .winner-card.base-winner .winner-savings span {
+      color: var(--color-primary-hover);
+    }
+
+    /* Visual Comparison (Bar Chart) */
+    .chart-container {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .chart-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chart-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+    }
+
+    .chart-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .chart-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chart-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .chart-bar-bg {
+      height: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 99px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .chart-bar-fill.winner {
+      background: linear-gradient(90deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .chart-bar-fill.loser {
+      background: linear-gradient(90deg, #475569 0%, #334155 100%);
+    }
+
+    /* Explanatory Details Card */
+    .explanation-card {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .explanation-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.8rem;
+    }
+
+    .explanation-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .explanation-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .explanation-value {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .explanation-text-box {
+      background: rgba(15, 23, 42, 0.4);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+      border-left: 4px solid #475569;
+    }
+
+    .explanation-text-box strong {
+      color: var(--text-main);
+    }
+
+    /* Toast Notification */
+    .notification {
+      position: fixed;
+      top: -70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999;
+      transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notification.show {
+      top: 24px;
+      opacity: 1;
+    }
+
+    .notification.success {
+      background: var(--color-success-dark);
+      color: #0b0f19;
+    }
+
+    .notification.warning {
+      background: var(--color-warning);
+    }
+
+    /* ----------------------------------------------------
+       8. KEYFRAMES ANIMATIONS & RESPONSIVENESS
+       ---------------------------------------------------- */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .calculator-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+      
+      .inputs-panel {
+        padding: 30px 24px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .results-panel {
+        padding: 30px 24px;
+        background: rgba(15, 23, 42, 0.5);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px 8px;
+      }
+      
+      .calculator-card {
+        border-radius: 18px;
+      }
+      
+      .inputs-panel, .results-panel {
+        padding: 24px 16px;
+      }
+      
+      .winner-title {
+        font-size: 1.15rem;
+      }
+    }
+
+    /* ----------------------------------------------------
+       9. DIAGNOSTICS CARD (DEBUG OCR)
+       ---------------------------------------------------- */
+    .diagnostics-card {
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 16px;
+      box-shadow: var(--shadow-md);
+      font-size: 0.8rem;
+    }
+    .diagnostics-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--color-primary-hover);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .diagnostics-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .diagnostics-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .diagnostics-label {
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .diagnostics-pre {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      color: #34d399;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', Courier, monospace;
+      max-height: 180px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast de Notificações -->
+  <div class="notification" id="notification">
+    <span id="notificationText">Mensagem</span>
+  </div>
+
+  <div class="container">
+    
+    <!-- Cabeçalho com Logo -->
+    <header class="app-header">
+      <div class="logo-container">
+        <!-- Logo principal com Fallback Dinâmico -->
+        <img src="logo-placeholder.png" alt="FlyMiles Logo" class="agency-logo" id="agencyLogo" onerror="handleLogoError()">
+        
+        <!-- Elemento de fallback em SVG/CSS caso a imagem não exista -->
+        <div class="logo-fallback" id="logoFallback" style="display: none;">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5L21 16z"/>
+          </svg>
+          <span>FlyMiles</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Card Principal -->
+    <main class="calculator-card">
+      
+      <!-- Lado Esquerdo: Formulário de Inputs Dinâmicos (Dark Mode) -->
+      <section class="inputs-panel">
+        <div>
+          <!-- Área de Drop/Paste de Print (OCR) -->
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-prompt" id="dropPrompt">
+              <svg viewBox="0 0 24 24" class="drop-icon">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="currentColor"/>
+              </svg>
+              <div class="drop-title">Importar por Print (OCR)</div>
+              <div class="drop-desc">Cole o print da tela (Ctrl+V) ou clique aqui para enviar</div>
+            </div>
+            
+            <!-- Barra de Progresso OCR -->
+            <div class="ocr-progress" id="ocrProgress" style="display: none;">
+              <div class="spinner-ocr"></div>
+              <div class="ocr-text-status" id="ocrStatusText">Analisando imagem...</div>
+              <div class="ocr-progress-bar-bg">
+                <div class="ocr-progress-bar-fill" id="ocrProgressBarFill"></div>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+          <!-- Configuração Geral -->
+          <div style="margin-bottom: 20px;">
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" fill="currentColor"/></svg>
+              Configuração Geral
+            </h2>
+            <div class="form-group">
+              <div class="label-row">
+                <label for="valorMilheiro">Seu Valor do Milheiro (1.000 milhas)</label>
+                <div class="info-tooltip" data-tooltip="O custo real das suas milhas ou o preço médio pelo qual você costuma vendê-las/comprá-las.">
+                  <svg viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-icon">R$</span>
+                <input type="number" id="valorMilheiro" placeholder="17,00" step="0.01" min="0" value="17.00">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+              <div class="label-row">
+                <label for="precoDinheiro">Preço da Passagem 100% em Dinheiro (Opcional)</label>
+                <div class="info-tooltip" data-tooltip="O valor total da passagem caso fosse comprada 100% em dinheiro (sem usar milhas). Usado para comparar se vale mais a pena pagar em dinheiro ou usar milhas.">
+                  <svg viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-icon">R$</span>
+                <input type="number" id="precoDinheiro" placeholder="Ex: 915,44" step="0.01" min="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção Opções Cadastradas -->
+          <div>
+            <h2 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              Opções de Emissão Comparadas
+            </h2>
+            
+            <div class="options-list-wrapper" id="optionsContainer">
+              <!-- Renderizado via JavaScript -->
+            </div>
+
+            <button type="button" class="btn-add-option" onclick="addOption()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar Nova Opção
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão de Calcular -->
+        <button type="button" class="btn-calculate" onclick="calcularMelhorOpcao()">
+          <span class="btn-text">Calcular Melhor Opção</span>
+          <div class="spinner" id="btnSpinner"></div>
+          <svg viewBox="0 0 24 24" id="btnIcon"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </section>
+
+      <!-- Lado Direito: Resultados -->
+      <section class="results-panel" id="resultsPanel">
+        
+        <!-- Estado Inicial -->
+        <div class="empty-state" id="emptyState">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="planeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#93c5fd" />
+                <stop offset="100%" stop-color="#3b82f6" />
+              </linearGradient>
+            </defs>
+            <circle cx="60" cy="60" r="50" fill="#0f172a" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+            <path d="M78 50.5l-22-14v12l-18 6.5v8l18-.5v10l-4.5 3.5V80l8-2.5 8 2.5v-4l-4.5-3.5v-10l18 .5v-8.5l-18-6v-12z" fill="url(#planeGrad)" transform="rotate(45, 60, 60)" />
+            <path d="M28 85 A 40 40 0 0 1 92 35" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="6 4"/>
+          </svg>
+          <h3>Aguardando Dados</h3>
+          <p>Tire um print de todas as opções de milhas na cia aérea, cole com <strong>Ctrl+V</strong> aqui dentro, ou insira manualmente.</p>
+        </div>
+
+        <!-- Estado Com Resultados -->
+        <div class="results-content" id="resultsContent">
+          
+          <!-- Card Vencedor -->
+          <div class="winner-card" id="winnerCard">
+            <span class="winner-badge" id="winnerBadge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              Melhor Opção
+            </span>
+            <div class="winner-title" id="winnerTitle">Carregando...</div>
+            <div class="winner-savings" id="winnerSavings">Economia de <span>R$ 0,00</span></div>
+          </div>
+
+          <!-- Comparativo Visual Dinâmico -->
+          <div class="chart-container" id="chartContainer">
+            <h4 class="chart-title">Comparação de Custos Equivalentes</h4>
+            <div id="chartRowsWrapper" style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Linhas geradas dinamicamente -->
+            </div>
+          </div>
+
+          <!-- Detalhamento dos Números -->
+          <div class="explanation-card">
+            <div class="explanation-item">
+              <span class="explanation-label">Valor do Milheiro cobrado na opção vencedora:</span>
+              <span class="explanation-value" id="valMilheiroCobrado">R$ 0,00</span>
+            </div>
+            <div class="explanation-item">
+              <span class="explanation-label">Seu Milheiro de referência:</span>
+              <span class="explanation-value" id="valMilheiroReferencia">R$ 0,00</span>
+            </div>
+            <div class="explanation-text-box" id="explanationText">
+              Carregando explicação...
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Card de Diagnóstico OCR -->
+    <div class="diagnostics-card" id="diagnosticsCard" style="display: none;">
+      <h3 class="diagnostics-title">🔍 Painel de Diagnóstico OCR</h3>
+      <div class="diagnostics-content">
+        <div class="diagnostics-section">
+          <span class="diagnostics-label">Texto Bruto Extraído:</span>
+          <pre class="diagnostics-pre" id="diagRawText"></pre>
+        </div>
+        <div class="diagnostics-section">
+          <span class="diagnostics-label">Análise de Dados Mapeados:</span>
+          <pre class="diagnostics-pre" id="diagParsedData"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const errorDiv = document.createElement('div');
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '0';
+      errorDiv.style.left = '0';
+      errorDiv.style.width = '100%';
+      errorDiv.style.background = '#ef4444';
+      errorDiv.style.color = '#ffffff';
+      errorDiv.style.padding = '12px';
+      errorDiv.style.zIndex = '99999';
+      errorDiv.style.fontSize = '0.9rem';
+      errorDiv.style.fontWeight = 'bold';
+      errorDiv.style.textAlign = 'center';
+      errorDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+      errorDiv.innerHTML = `⚠️ Erro de Script: ${message} (Linha ${lineno}:${colno})`;
+      document.body.appendChild(errorDiv);
+      return false;
+    };
+
+    let optionIdCounter = 0;
+
+    // Inicialização da tela com duas opções padrão vazias
+    window.addEventListener('DOMContentLoaded', () => {
+      addOption();
+      addOption();
+    });
+
+    /* ----------------------------------------------------
+       GERENCIADOR DE LAYOUT DINÂMICO
+       ---------------------------------------------------- */
+    function addOption(points = '', cash = '') {
+      optionIdCounter++;
+      const container = document.getElementById('optionsContainer');
+      const optionCard = document.createElement('div');
+      optionCard.className = 'option-row-card';
+      optionCard.id = `optionCard_${optionIdCounter}`;
+      
+      const isFirst = container.children.length === 0;
+      const removeBtnHtml = isFirst ? '' : `
+        <button type="button" class="btn-remove-option" onclick="removeOption(${optionIdCounter})" title="Remover Opção">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+        </button>`;
+      
+      optionCard.innerHTML = `
+        <div class="option-card-header">
+          <span class="option-card-title">Opção ${container.children.length + 1}</span>
+          ${removeBtnHtml}
+        </div>
+        <div class="option-inputs-grid">
+          <div class="form-group">
+            <label for="optPoints_${optionIdCounter}">Pontos Exigidos</label>
+            <div class="input-wrapper points-input">
+              <input type="number" id="optPoints_${optionIdCounter}" class="opt-points-val" placeholder="Ex: 50000" min="0" step="100" value="${points}">
+              <span class="points-tag">pts</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="optCash_${optionIdCounter}">Dinheiro (Taxa + Copart.)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">R$</span>
+              <input type="number" id="optCash_${optionIdCounter}" class="opt-cash-val" placeholder="Ex: 60,00" min="0" step="0.01" value="${cash}">
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(optionCard);
+      updateOptionLabels();
+    }
+
+    function removeOption(id) {
+      const card = document.getElementById(`optionCard_${id}`);
+      if (card) {
+        card.remove();
+        updateOptionLabels();
+      }
+    }
+
+    function updateOptionLabels() {
+      const container = document.getElementById('optionsContainer');
+      const cards = container.getElementsByClassName('option-row-card');
+      for (let i = 0; i < cards.length; i++) {
+        const title = cards[i].querySelector('.option-card-title');
+        title.innerText = cards[i].id === container.children[0].id ? 'Opção 1 (100% Pontos)' : `Opção ${i + 1}`;
+      }
+    }
+
+    /* ----------------------------------------------------
+       LOGO FALLBACK HANDLER
+       ---------------------------------------------------- */
+    function handleLogoError() {
+      document.getElementById('agencyLogo').style.display = 'none';
+      document.getElementById('logoFallback').style.display = 'flex';
+    }
+
+    /* ----------------------------------------------------
+       NOTIFICAÇÕES TOAST
+       ---------------------------------------------------- */
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      const text = document.getElementById('notificationText');
+      
+      notification.className = 'notification';
+      if (type === 'success') {
+        notification.classList.add('success');
+      } else if (type === 'warning') {
+        notification.classList.add('warning');
+      }
+      
+      text.innerText = message;
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 4000);
+    }
+
+    /* ----------------------------------------------------
+       DRAG & DROP / PASTE COM OCR LOCAL
+       ---------------------------------------------------- */
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const dropPrompt = document.getElementById('dropPrompt');
+    const ocrProgress = document.getElementById('ocrProgress');
+    const ocrStatusText = document.getElementById('ocrStatusText');
+    const ocrProgressBarFill = document.getElementById('ocrProgressBarFill');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        processImage(e.target.files[0]);
+      }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drop-zone--over');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+      dropZone.addEventListener(type, () => {
+        dropZone.classList.remove('drop-zone--over');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drop-zone--over');
+      if (e.dataTransfer.files.length) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith('image/')) {
+          processImage(file);
+        } else {
+          showNotification("Por favor, envie uma imagem.", "warning");
+        }
+      }
+    });
+
+    // Captura global do CTRL+V / CMD+V
+    document.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      let imageFound = false;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          processImage(blob);
+          imageFound = true;
+          break;
+        }
+      }
+      if (!imageFound && e.target.tagName !== 'INPUT') {
+        showNotification("Nenhuma imagem copiada na área de transferência.", "warning");
+      }
+    });
+
+    function processImage(file) {
+      if (typeof Tesseract === 'undefined') {
+        showNotification("Aguarde a biblioteca OCR carregar ou verifique sua conexão.", "warning");
+        return;
+      }
+
+      dropPrompt.style.display = 'none';
+      ocrProgress.style.display = 'flex';
+      ocrStatusText.innerText = 'Inicializando OCR...';
+      ocrProgressBarFill.style.width = '0%';
+
+      const imageUrl = URL.createObjectURL(file);
+
+      Tesseract.recognize(
+        imageUrl,
+        'por',
+        {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              ocrStatusText.innerText = `Lendo print: ${Math.round(m.progress * 100)}%`;
+              ocrProgressBarFill.style.width = `${m.progress * 100}%`;
+            }
+          }
+        }
+      ).then(({ data: { text } }) => {
+        dropPrompt.style.display = 'flex';
+        ocrProgress.style.display = 'none';
+        
+        // Fazer a associação de proximidade de texto
+        const parsedPairs = parseOCRTextProximity(text);
+        
+        // Atualizar painel de diagnóstico
+        document.getElementById('diagnosticsCard').style.display = 'block';
+        document.getElementById('diagRawText').innerText = text || "(Nenhum texto extraído)";
+        document.getElementById('diagParsedData').innerText = JSON.stringify(parsedPairs, null, 2);
+        
+        fillFormWithParsedData(parsedPairs);
+        
+        if (parsedPairs.length === 0) {
+          document.getElementById('diagnosticsCard').scrollIntoView({ behavior: 'smooth' });
+        }
+      }).catch(err => {
+        console.error("OCR Error:", err);
+        showNotification("Não foi possível processar o print.", "warning");
+        dropPrompt.style.display = 'flex';
+        ocrProgress.style.display = 'none';
+      });
+    }
+
+    // Algoritmo de Pareamento por Proximidade de Texto
+    function parseOCRTextProximity(text) {
+      // 1. Normalização de caracteres: remover acentos, minúsculas, unificar espaços
+      let normalized = text.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, ' ');
+
+      // 2. Normalizar e limpar prefixos comuns lidos pelo OCR antes de qualquer coisa (inclui BRL e typos comuns)
+      normalized = normalized.replace(/\b(rs|as|us|ns|es|os|ms|ys|zs|xs|ts|s\$|h\$|o\$|e\$|brl|bri|br1|btl|brs)\b\s*|\b(r\$|n\$|a\$|u\$)\s*/g, 'r$$ ');
+      // Caso o prefixo esteja colado no número (ex: brl140 -> r$ 140)
+      normalized = normalized.replace(/\b(brl|brs|rs|r\$|n\$|a\$|u\$)(\d)/g, 'r$$ $2');
+      
+      // 3. Normalizar termos de taxa de embarque
+      normalized = normalized.replace(/taxa(?:de)?/g, 'taxa ');
+      normalized = normalized.replace(/emberque|embarque/g, 'embarque');
+      
+      // 4. Remover + redundante antes de r$, substituindo por espaço
+      normalized = normalized.replace(/\+\s*r\$/g, ' r$$');
+
+      // 5. Digitalizar caracteres lidos errados após r$ ou embarque (com substituições case-insensitive)
+      function digitizeMatch(match, p1) {
+        const words = p1.trim().split(/\s+/);
+        const numWords = [];
+        for (let word of words) {
+          if (/^[0-9\.,bozsila_gqaeos]+$/i.test(word)) {
+            numWords.push(word);
+          } else {
+            break;
+          }
+        }
+        if (numWords.length > 0) {
+          const rawNumStr = numWords.join(' ');
+          const digitized = rawNumStr
+            .replace(/o/gi, '0')
+            .replace(/s/gi, '5')
+            .replace(/z/gi, '2')
+            .replace(/i|l|\|/gi, '1')
+            .replace(/b/gi, '6')
+            .replace(/g|q/gi, '9')
+            .replace(/a/gi, '4');
+          return match.replace(rawNumStr, digitized);
+        }
+        return match;
+      }
+
+      normalized = normalized.replace(/r\$\s*([a-z0-9\.,]+(?:\s+[a-z0-9\.,]+){0,2})/gi, digitizeMatch);
+      normalized = normalized.replace(/embarque\s+([a-z0-9\.,]+(?:\s+[a-z0-9\.,]+){0,2})/gi, digitizeMatch);
+
+      // Remover espaços ao redor de vírgulas ou pontos que estão entre números (ex: "140 , 31" -> "140,31")
+      normalized = normalized.replace(/(\d+)\s*([\.,])\s*(\d+)/g, '$1$2$3');
+
+      // 6. Normalizar espaços no meio de números: "60 54" -> "60,54" (evita falsos positivos com lookbehind)
+      normalized = normalized.replace(/(?<![\.,])\b(\d+)\s+(\d{2})\b/g, '$1,$2');
+      // Formatar números de 4 dígitos nos impostos se necessário
+      normalized = normalized.replace(/\b(\d{2})(\d{2})\b/g, '$1,$2');
+
+      console.log("Texto OCR Normalizado para Pareamento:\n", normalized);
+
+      // 7. Extração de moedas (com índice de posição no texto - permite 1 ou 2 dígitos de centavos)
+      const currencyRegex = /(?:r\$\s*)?\b\d+(?:\.\d{3})*[\.,]\d{1,2}\b|\br\$\s*\d+(?:\.\d{3})*\b/g;
+      
+      let match;
+      const currencies = [];
+      while ((match = currencyRegex.exec(normalized)) !== null) {
+        const rawVal = match[0];
+        const index = match.index;
+        const clean = rawVal.replace(/r\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
+        const val = parseFloat(clean);
+        if (!isNaN(val) && val > 0) {
+          currencies.push({ val, index, length: rawVal.length });
+        }
+      }
+
+      // Substituir moedas no texto por espaços vazios de mesmo tamanho para evitar que o leitor de pontos as capture
+      let textForPoints = normalized;
+      currencies.forEach(c => {
+        const pad = " ".repeat(c.length);
+        textForPoints = textForPoints.substring(0, c.index) + pad + textForPoints.substring(c.index + c.length);
+      });
+
+      // 8. Extração de pontos/milhas (com índice de posição no texto)
+      const pointsRegex = /\b\d{1,3}(?:\.\d{3})+(?!\d)|\b\d{4,7}(?!\d)/g;
+      const points = [];
+      while ((match = pointsRegex.exec(textForPoints)) !== null) {
+        const rawVal = match[0];
+        const index = match.index;
+        const clean = rawVal.replace(/\./g, '');
+        const val = parseInt(clean, 10);
+        if (!isNaN(val) && val >= 1000) {
+          points.push({ val, index });
+        }
+      }
+
+      // 9. Associar os pontos ao valor em dinheiro mais próximo após eles
+      const pairs = [];
+      points.sort((a, b) => a.index - b.index);
+
+      points.forEach((p, i) => {
+        const nextPointIndex = (i < points.length - 1) ? points[i+1].index : Infinity;
+        
+        let candidateCurrencies = currencies.filter(c => c.index > p.index && c.index < nextPointIndex);
+        
+        // Evita associar pontos com moedas se houver a palavra "ou" / "or" entre eles
+        candidateCurrencies = candidateCurrencies.filter(c => {
+          const textBetween = normalized.substring(p.index, c.index);
+          return !(/\bou\b|\bor\b/.test(textBetween));
+        });
+        
+        if (candidateCurrencies.length > 0) {
+          pairs.push({
+            points: p.val,
+            cash: candidateCurrencies[0].val
+          });
+        } else {
+          pairs.push({
+            points: p.val,
+            cash: 0
+          });
+        }
+      });
+
+      // Correção de desvios comuns de leitura de milhas no OCR da Smiles (ex: 9.570 lido como 2.570)
+      // Verifica se a primeira letra de uma milha de 4 dígitos foi trocada, comparando com 30% de qualquer base de 100% milhas (>= 10000 pts)
+      if (pairs.length > 0) {
+        const bases = pairs.map(p => p.points).filter(pts => pts >= 10000);
+        if (bases.length > 0) {
+          pairs.forEach(pair => {
+            if (pair.points < 10000 && pair.points >= 1000) {
+              const corrected = parseInt("9" + pair.points.toString().substring(1), 10);
+              const matchesAnyBase = bases.some(base => corrected === Math.round(base * 0.3));
+              if (matchesAnyBase) {
+                pair.points = corrected;
+              }
+            }
+          });
+        }
+      }
+
+      // Ordena decrescente pelo número de pontos
+      pairs.sort((a, b) => b.points - a.points);
+      
+      // Detectar companhia aérea
+      window.detectedCiaAerea = "a companhia aérea";
+      const lowerText = text.toLowerCase();
+      if (lowerText.includes("smiles") || lowerText.includes("gol")) {
+        window.detectedCiaAerea = "GOL/Smiles";
+      } else if (lowerText.includes("latam") || lowerText.includes("pass")) {
+        window.detectedCiaAerea = "LATAM";
+      } else if (lowerText.includes("azul") || lowerText.includes("tudoazul")) {
+        window.detectedCiaAerea = "Azul";
+      }
+
+      // Procurar por preço 100% em dinheiro por palavras-chave
+      window.detectedCashPrice = 0;
+      const cashPriceRegex = /(?:ou|or|em dinheiro)\s*(?:r\$\s*)?(\d+(?:\.\d{3})*,\d{2}\b|\d+(?:\.\d{3})*\b)/i;
+      const cashMatch = cashPriceRegex.exec(normalized);
+      if (cashMatch) {
+        const cleanCash = cashMatch[1].replace(/\./g, '').replace(/,/g, '.');
+        window.detectedCashPrice = parseFloat(cleanCash);
+      }
+
+      // Se não detectou pela regex, procura pelo maior valor monetário não pareado maior que 100.00
+      if (!window.detectedCashPrice) {
+        const pairedCashes = pairs.map(p => p.cash);
+        const unpairedCurrencies = currencies.filter(c => !pairedCashes.includes(c.val) && c.val > 100);
+        if (unpairedCurrencies.length > 0) {
+          unpairedCurrencies.sort((a, b) => b.val - a.val);
+          window.detectedCashPrice = unpairedCurrencies[0].val;
+        }
+      }
+
+      console.log("Pares de Opções Estruturados:", pairs);
+      console.log("Companhia Detectada:", window.detectedCiaAerea);
+      console.log("Preço 100% Dinheiro Detectado:", window.detectedCashPrice);
+      return pairs;
+    }
+
+    function fillFormWithParsedData(pairs) {
+      if (pairs.length === 0) {
+        showNotification("Nenhum dado legível no print.", "warning");
+        return;
+      }
+
+      // --- DEDUPLICAÇÃO DE OPÇÕES (REPETIÇÃO DESNECESSÁRIA) ---
+      // Filtra repetições de pontos mantendo a ordem sequencial e preferindo valores de dinheiro > 0
+      const deduplicatedPairs = [];
+      const seenPoints = new Set();
+      
+      pairs.forEach(pair => {
+        if (!seenPoints.has(pair.points)) {
+          seenPoints.add(pair.points);
+          deduplicatedPairs.push(pair);
+        } else {
+          const existing = deduplicatedPairs.find(p => p.points === pair.points);
+          if (existing && existing.cash === 0 && pair.cash > 0) {
+            existing.cash = pair.cash;
+          }
+        }
+      });
+      
+      // Re-ordenar por pontos decrescente (a maior pontuação será a Opção Base)
+      deduplicatedPairs.sort((a, b) => b.points - a.points);
+
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = ''; // Limpa campos existentes
+
+      // Renderiza as novas opções limpas
+      deduplicatedPairs.forEach(pair => {
+        addOption(pair.points, pair.cash);
+      });
+
+      // Preencher o preço 100% em dinheiro se detectado
+      const precoDinheiroInput = document.getElementById('precoDinheiro');
+      if (window.detectedCashPrice && window.detectedCashPrice > 0) {
+        precoDinheiroInput.value = window.detectedCashPrice.toFixed(2);
+      } else {
+        precoDinheiroInput.value = '';
+      }
+
+      showNotification(`Importado com sucesso! ${deduplicatedPairs.length} opções limpas identificadas.`, "success");
+      
+      // Executa o cálculo imediatamente
+      calcularMelhorOpcao();
+    }
+
+    /* ----------------------------------------------------
+       LÓGICA MATEMÁTICA E CÁLCULO PRINCIPAL
+       ---------------------------------------------------- */
+    function formatarReal(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function calcularMelhorOpcao() {
+      const valorMilheiro = parseFloat(document.getElementById('valorMilheiro').value) || 0;
+      const precoDinheiro = parseFloat(document.getElementById('precoDinheiro').value) || 0;
+      
+      // Resgatar todas as opções inseridas no formulário
+      const container = document.getElementById('optionsContainer');
+      const cards = container.getElementsByClassName('option-row-card');
+      
+      const options = [];
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const pointsInput = card.querySelector('.opt-points-val');
+        const cashInput = card.querySelector('.opt-cash-val');
+        
+        const points = parseFloat(pointsInput.value) || 0;
+        const cash = parseFloat(cashInput.value) || 0;
+        
+        if (points > 0) {
+          options.push({
+            id: i + 1,
+            label: cards[i].querySelector('.option-card-title').innerText,
+            points: points,
+            cash: cash
+          });
+        }
+      }
+
+      if (options.length === 0 || valorMilheiro <= 0) {
+        showNotification("Insira o valor do milheiro e pelo menos 1 opção de milhas.", "warning");
+        return;
+      }
+
+      // Animação de processamento no botão
+      const btnText = document.querySelector('.btn-text');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btnIcon = document.getElementById('btnIcon');
+      
+      btnText.style.opacity = '0.5';
+      btnIcon.style.display = 'none';
+      btnSpinner.style.display = 'block';
+
+      setTimeout(() => {
+        btnText.style.opacity = '1';
+        btnIcon.style.display = 'block';
+        btnSpinner.style.display = 'none';
+
+        // 1. Identificar a Opção Base (100% Pontos - que tem maior pontuação)
+        const sortedByPoints = [...options].sort((a, b) => b.points - a.points);
+        const baseOption = sortedByPoints[0];
+
+        // 2. Se houver preço em dinheiro, adicionar como uma opção virtual
+        if (precoDinheiro > 0) {
+          options.push({
+            id: 'cash_only',
+            label: '100% Dinheiro',
+            points: 0,
+            cash: precoDinheiro,
+            isCashOnly: true
+          });
+        }
+
+        // 3. Calcular Custo Total Equivalente e Milheiro Cobrado para cada opção
+        options.forEach(opt => {
+          if (opt.isCashOnly) {
+            opt.custoTotal = opt.cash;
+            // O milheiro equivalente obtido ao pagar em dinheiro em vez da opção base (100% pontos)
+            if (baseOption.points > 0) {
+              opt.milheiroCobrado = (opt.cash - baseOption.cash) / (baseOption.points / 1000);
+            } else {
+              opt.milheiroCobrado = null;
+            }
+          } else {
+            opt.custoTotal = ((opt.points / 1000) * valorMilheiro) + opt.cash;
+            
+            // Milheiro cobrado em relação à opção base (apenas se tiver menos pontos que a base)
+            if (opt.points < baseOption.points) {
+              const diffPoints = baseOption.points - opt.points;
+              const diffCash = opt.cash - baseOption.cash;
+              opt.milheiroCobrado = diffCash / (diffPoints / 1000);
+            } else {
+              opt.milheiroCobrado = null;
+            }
+          }
+        });
+
+        // 4. Encontrar a melhor opção (Menor Custo Equivalente)
+        const sortedByCost = [...options].sort((a, b) => a.custoTotal - b.custoTotal);
+        const winningOption = sortedByCost[0];
+
+        const economia = baseOption.custoTotal - winningOption.custoTotal;
+
+        // 5. Renderizar a Interface de Resultados
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsContent').style.display = 'flex';
+
+        const winnerCard = document.getElementById('winnerCard');
+        const winnerTitle = document.getElementById('winnerTitle');
+        const winnerSavings = document.getElementById('winnerSavings');
+        
+        // Se a base (100% pontos) for a vencedora
+        if (winningOption.id === baseOption.id) {
+          winnerCard.className = "winner-card base-winner";
+          winnerTitle.innerText = `${winningOption.label}`;
+          winnerSavings.innerHTML = `Utilizar 100% pontos é a melhor escolha para este cenário.`;
+        } else if (winningOption.isCashOnly) {
+          winnerCard.className = "winner-card";
+          winnerTitle.innerText = `Pagar 100% em Dinheiro`;
+          winnerSavings.innerHTML = `Economia de <span>${formatarReal(economia)}</span> em relação a 100% Pontos.`;
+        } else {
+          winnerCard.className = "winner-card";
+          winnerTitle.innerText = `${winningOption.label} (Misto)`;
+          winnerSavings.innerHTML = `Economia de <span>${formatarReal(economia)}</span> em relação a 100% Pontos.`;
+        }
+
+        // Renderizar o gráfico comparativo
+        const chartWrapper = document.getElementById('chartRowsWrapper');
+        chartWrapper.innerHTML = '';
+        
+        const maiorCusto = Math.max(...options.map(o => o.custoTotal));
+
+        options.forEach(opt => {
+          const pct = maiorCusto > 0 ? (opt.custoTotal / maiorCusto) * 100 : 0;
+          const isWinner = opt.id === winningOption.id;
+          
+          let labelText = '';
+          if (opt.isCashOnly) {
+            labelText = `${opt.label}`;
+          } else {
+            labelText = `${opt.label} (${opt.points.toLocaleString()} pts)`;
+          }
+
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          row.innerHTML = `
+            <div class="chart-label-row">
+              <span>${labelText}</span>
+              <span>${formatarReal(opt.custoTotal)}</span>
+            </div>
+            <div class="chart-bar-bg">
+              <div class="chart-bar-fill ${isWinner ? 'winner' : 'loser'}" style="width: ${pct}%"></div>
+            </div>
+          `;
+          chartWrapper.appendChild(row);
+        });
+
+        // Atualizar Detalhamento da Cobrança e Explicação com o Nome da Cia Aérea
+        const valMilheiroCobrado = document.getElementById('valMilheiroCobrado');
+        const valMilheiroReferencia = document.getElementById('valMilheiroReferencia');
+        const explanationText = document.getElementById('explanationText');
+
+        let ciaNome = window.detectedCiaAerea || "a companhia aérea";
+        let ciaFormatada = ciaNome;
+        if (ciaNome === "GOL/Smiles") ciaFormatada = "A GOL/Smiles";
+        else if (ciaNome === "LATAM") ciaFormatada = "A LATAM";
+        else if (ciaNome === "Azul") ciaFormatada = "A Azul";
+        else ciaFormatada = "A companhia aérea";
+
+        valMilheiroReferencia.innerText = formatarReal(valorMilheiro);
+
+        if (winningOption.id === baseOption.id) {
+          valMilheiroCobrado.innerText = "N/A";
+          explanationText.innerHTML = `${ciaFormatada} está cobrando um valor muito alto pelo milheiro faltante nas opções mistas/dinheiro. Como o custo de emitir pontos extras supera o seu valor de referência (<strong>${formatarReal(valorMilheiro)}</strong>), é mais vantajoso usar **100% Pontos**.`;
+        } else if (winningOption.isCashOnly) {
+          const cobradoVal = winningOption.milheiroCobrado;
+          valMilheiroCobrado.innerText = formatarReal(cobradoVal);
+          
+          explanationText.innerHTML = `Pagar <strong>100% em dinheiro</strong> é a melhor escolha neste cenário. O valor equivalente que você obteria pelas suas milhas ao emitir esta passagem seria de apenas <strong>${formatarReal(cobradoVal)}</strong> por milheiro, o que é menor do que o seu milheiro de referência (<strong>${formatarReal(valorMilheiro)}</strong>). Portanto, é melhor poupar suas milhas para uma emissão mais vantajosa e pagar o valor total de <strong>${formatarReal(winningOption.cash)}</strong> em dinheiro.`;
+        } else {
+          const cobradoVal = winningOption.milheiroCobrado;
+          valMilheiroCobrado.innerText = formatarReal(cobradoVal);
+          
+          const diffCashWinner = winningOption.cash - baseOption.cash;
+          explanationText.innerHTML = `${ciaFormatada} está vendendo o milheiro faltante por apenas <strong>${formatarReal(cobradoVal)}</strong> nesta opção. Como este valor é menor que o seu milheiro de referência (<strong>${formatarReal(valorMilheiro)}</strong>), vale a pena pagar a diferença em dinheiro de <strong>${formatarReal(diffCashWinner)}</strong> (já deduzida a taxa base de <strong>${formatarReal(baseOption.cash)}</strong>) e poupar suas milhas!`;
+        }
+
+        // Adicionar detalhamento matemático de todas as opções no resumo
+        let breakdownHtml = `<br><br><strong style="color: var(--text-main); font-size: 0.85rem; display: block; margin-bottom: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">Detalhamento dos Custos (Milheiro a ${formatarReal(valorMilheiro)}):</strong><ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 6px;">`;
+        
+        options.forEach(opt => {
+          if (opt.isCashOnly) {
+            breakdownHtml += `<li style="font-size: 0.75rem; color: var(--text-muted);">
+              <strong>${opt.label}</strong>: 
+              ${formatarReal(opt.cash)} em dinheiro (Equivale a obter <strong>${formatarReal(opt.milheiroCobrado)}</strong>/milheiro pelas milhas da base)
+            </li>`;
+          } else {
+            const milesCost = (opt.points / 1000) * valorMilheiro;
+            const isBase = opt.id === baseOption.id;
+            const milheiroCobradoStr = isBase ? 'N/A (Opção Base)' : `Milheiro Cobrado: <strong>${formatarReal(opt.milheiroCobrado)}</strong>`;
+            
+            breakdownHtml += `<li style="font-size: 0.75rem; color: var(--text-muted);">
+              <strong>${opt.label}</strong>: 
+              (${opt.points.toLocaleString()} pts &times; ${formatarReal(valorMilheiro)}/milheiro) + ${formatarReal(opt.cash)} = 
+              ${formatarReal(milesCost)} + ${formatarReal(opt.cash)} = <strong>${formatarReal(opt.custoTotal)}</strong> 
+              ${!isBase ? `(${milheiroCobradoStr})` : ''}
+            </li>`;
+          }
+        });
+        breakdownHtml += `</ul>`;
+        explanationText.innerHTML += breakdownHtml;
+
+      }, 300);
+    }
+  </script>
+</body>
+</html>
