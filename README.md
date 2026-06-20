@@ -6,6 +6,13 @@ O grande diferencial da ferramenta é a automação da entrada de dados por meio
 
 ---
 
+## 🔗 Demonstração Online
+
+A ferramenta está publicada e disponível para uso direto no link abaixo:
+👉 **[https://flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)**
+
+---
+
 ## ✨ Principais Funcionalidades
 
 *   **Importação por Print (OCR Local)**: Copie a tela de busca da sua companhia aérea e cole diretamente na ferramenta com `Ctrl+V` (ou clique para enviar a imagem). O processamento ocorre 100% no seu computador, de forma segura e instantânea.
@@ -56,27 +63,15 @@ Por ser uma aplicação totalmente *client-side*, não há necessidade de instal
 
 ---
 
-## 🌐 Hospedagem e Deploy (GitHub Pages)
+## 🌐 Hospedagem e Deploy
 
-Como a aplicação é composta apenas por arquivos estáticos (HTML, CSS e JS), ela pode ser hospedada gratuitamente e de forma extremamente estável no **GitHub Pages**.
+Por ser uma aplicação totalmente client-side (HTML, CSS e JS estáticos), a implantação é simples e pode ser feita em qualquer provedor de hospedagem de arquivos.
 
-### Passo 1: Ativar o GitHub Pages no Repositório
-1. No seu repositório no GitHub, acesse a aba **Settings** (Configurações).
-2. No menu lateral esquerdo, clique em **Pages**.
-3. Em **Build and deployment** > **Source**, selecione a opção **Deploy from a branch**.
-4. Em **Branch**, selecione a branch `main` e a pasta `/ (root)`.
-5. Clique em **Save**.
-6. Após alguns minutos, a calculadora estará publicada na web no endereço:
-   `https://fsfariaspe.github.io/calculadora-milhas/`
+O projeto está publicado na estrutura do portfólio principal:
+*   **[flaviofariaspe.com.br/calculadora-milhas.html](https://flaviofariaspe.com.br/calculadora-milhas.html)**
 
-### Passo 2: Apontar para um Subdomínio Personalizado (Opcional)
-Para disponibilizar a ferramenta sob um subdomínio do seu site de portfólio (ex: `calculadora.seudominio.com`):
-1. Acesse o painel de gerenciamento de DNS do seu domínio (Cloudflare, Registro.br, GoDaddy, etc.).
-2. Adicione um novo registro de DNS com as seguintes configurações:
-   * **Tipo**: `CNAME`
-   * **Nome (Host)**: `calculadora` (ou o subdomínio escolhido)
-   * **Destino (Target)**: `fsfariaspe.github.io`
-   * **TTL**: Automático ou 3600
-3. Volte para a aba **Pages** do seu repositório no GitHub.
-4. No campo **Custom domain**, digite o subdomínio completo (ex: `calculadora.seudominio.com`) e clique em **Save**.
-5. O GitHub irá provisionar um certificado SSL gratuito automaticamente para o seu subdomínio e criará um arquivo chamado `CNAME` no seu repositório para manter o redirecionamento ativo.
+Caso prefira implantar em plataformas gratuitas como o **GitHub Pages**:
+1. Crie um repositório no GitHub contendo os arquivos `index.html` e `viaje-facil-brasil.png`.
+2. Acesse a aba **Settings** > **Pages** do repositório.
+3. Sob **Build and deployment**, selecione a branch `main` e a pasta `/ (root)`.
+4. Salve e a ferramenta estará disponível em `https://<seu-usuario>.github.io/calculadora-milhas/`.
